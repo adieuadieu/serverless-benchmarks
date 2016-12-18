@@ -2,7 +2,7 @@ import request from 'request'
 import math from 'mathjs'
 import ProgressBar from 'progress'
 
-const limit = 10000
+const limit = 100
 const url = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
 const query = '{ hello(name: "Bob") }'
 
@@ -48,11 +48,11 @@ async function benchmark () {
 
   console.log('=== Results ===')
   console.log('Date', Date().toLocaleString())
-  console.log('Duration', Date.now() - startDate)
-  console.log('Requests', results.length)
-  console.log('Min', min)
-  console.log('Max', max)
-  console.log('Mean', mean)
+  console.log(`Duration:\t\t${Date.now() - startDate}ms`)
+  console.log(`Requests:\t\t${results.length}ms`)
+  console.log(`Min:\t\t${min}ms`)
+  console.log(`Max:\t\t${max}ms`)
+  console.log(`Mean:\t\t${mean}`)
 }
 
 benchmark()
