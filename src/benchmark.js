@@ -62,11 +62,13 @@ async function benchmark (url, query, limit) {
 
   console.log('———— Results ————')
   console.log('Completion Date', Date(completionDate).toLocaleString())
-  console.log(`Total Duration:\t\t${totalDuration}ms`)
+  console.log(`Total Duration:\t\t${totalDuration} ms`)
   console.log(`Requests made:\t\t${totalRequests}`)
-  console.log(`Duration Min:\t\t${min}ms`)
-  console.log(`Duration Max:\t\t${max}ms`)
-  console.log(`Duration Mean:\t\t${mean}`)
+  console.log(`Duration Min:\t\t${min} ms`)
+  console.log(`Duration Max:\t\t${max} ms`)
+  console.log(`Duration Mean:\t\t${mean} ms`)
+
+  console.log('CSV: ', data.join(','))
 
   return data
 }
