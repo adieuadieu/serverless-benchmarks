@@ -82,8 +82,8 @@ functions:
           method: get
   graphql:
     handler: handler.gqlHello
-    memorySize: 1024
-    timeout: 30    
+    memorySize: 128
+    timeout: 30
     events:
       - http:
           path: benchmark/graphql/hello

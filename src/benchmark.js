@@ -1,16 +1,58 @@
-/* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": true}] */
-import test from 'ava'
-import config from './config'
-import { makeKey } from './utils'
+import request from 'request'
+import math from 'mathjs'
+import ProgressBar from 'progress'
 
-const { destinationPrefix } = config
+const limit = 10000
+const url = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
+const query = '{ hello(name: "Bob") }'
 
-test('makeKey()', async (t) => {
-  const template = 'magical/unicorns/%(directory)s/%(crumbs[1])s/%(filename)s.%(extension)s'
-  const context = { key: 'test1/test2/test3/fancy.png', type: 'image/jpeg' }
-  const expected = `${destinationPrefix}magical/unicorns/test1/test2/test3/test2/fancy.jpeg`
+const startDate = Date.now()
+const progressBar = new ProgressBar(':bar :current/:total (:percent) - :elapsed - ETA :eta', { total: limit })
 
-  const key = makeKey(template, context)
+function makeRequestPromise () {
+  return new Promise((resolve, reject) => {
+    let begin = Date.now()
 
-  t.is(key, expected)
-})
+    request({ url, qs: { query } })
+      .on('socket', () => {
+        begin = Date.now()
+      })
+      .on('response', () => {
+        const end = Date.now()
+        const delta = end - begin
+        resolve(delta)
+      })
+      .on('error', reject)
+  })
+}
+
+async function makeRequests () {
+  const results = []
+
+  for (let i = 0; i < limit; i++) {
+    results[i] = await makeRequestPromise(i)
+    progressBar.tick()
+  }
+
+  return results
+}
+
+async function benchmark () {
+  const results = await makeRequests()
+
+  console.log('results', results)
+
+  const min = Math.min(...results)
+  const max = Math.max(...results)
+  const mean = math.mean(...results)
+
+  console.log('=== Results ===')
+  console.log('Date', Date().toLocaleString())
+  console.log('Duration', Date.now() - startDate)
+  console.log('Requests', results.length)
+  console.log('Min', min)
+  console.log('Max', max)
+  console.log('Mean', mean)
+}
+
+benchmark()

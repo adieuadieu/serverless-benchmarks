@@ -3,8 +3,18 @@
   "version": "0.0.1",
   "description": "benchmark stuff",
   "main": "src/",
+  "config": {
+    "jsSrc": "src/"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ava",
+    "watch:test": "ava --watch",
+    "lint": "npm run lint:eslint -s",
+    "lint:eslint": "eslint $npm_package_config_jsSrc",
+    "lint:jscs": "jscs $npm_package_config_jsSrc/",
+    "deploy": "npm test && serverless deploy -v",
+    "postinstall": "cpy config.sample.json config.json && cpy event.sample.json event.json",
+    "benchmark": "babel-node src/benchmark.js"
   },
   "repository": {
     "type": "git",
@@ -22,8 +32,15 @@
     "url": "https://github.com/adieuadieu/serverless-graphql-benchmarks/issues"
   },
   "homepage": "https://github.com/adieuadieu/serverless-graphql-benchmarks",
+  "dependencies": {
+    "graphql": "0.8.2",
+    "mathjs": "3.8.1",
+    "progress": "1.1.8",
+    "request": "2.79.0"
+  },
   "devDependencies": {
     "ava": "0.17.0",
+    "babel-cli": "6.18.0",
     "babel-core": "6.21.0",
     "babel-eslint": "7.1.1",
     "babel-loader": "6.2.10",
@@ -36,6 +53,7 @@
     "babel-register": "6.18.0",
     "eslint": "3.12.2",
     "eslint-config-airbnb-base": "11.0.0",
+    "eslint-plugin-ava": "4.0.0",
     "eslint-plugin-import": "2.2.0",
     "eslint-plugin-promise": "3.4.0",
     "json-loader": "0.5.4",
@@ -96,8 +114,5 @@
         "always"
       ]
     }
-  },
-  "dependencies": {
-    "graphql": "0.8.2"
   }
 }
