@@ -74,7 +74,7 @@ plugins:
 functions:
   hello:
     handler: handler.hello
-    memorySize: 1024
+    memorySize: 128
     timeout: 30
     events:
       - http:
