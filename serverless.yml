@@ -52,15 +52,41 @@ provider:
 #    - exclude-me.js
 #    - exclude-me-dir/**
 
+package:
+  exclude:
+    - .serverless
+    - .webpack
+    - coverage
+    - .babelrc
+    - .eslintignore
+    - .eslintrc
+    - .gitignore
+    - LICENSE
+    - package.json
+    - README.md
+    - serverless.yml
+    - webpack.config.js
+    - src/
+
 plugins:
   - serverless-webpack
 
 functions:
   hello:
-    handler: handler.graphql
+    handler: handler.hello
+    memorySize: 1024
+    timeout: 30
     events:
       - http:
-          path: benchmark/graphql
+          path: benchmark/hello
+          method: get
+  graphql:
+    handler: handler.gqlHello
+    memorySize: 1024
+    timeout: 30    
+    events:
+      - http:
+          path: benchmark/graphql/hello
           method: get
 #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
