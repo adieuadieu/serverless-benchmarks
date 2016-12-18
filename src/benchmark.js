@@ -7,7 +7,7 @@ const url = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmar
 const query = '{ hello(name: "Bob") }'
 
 const startDate = Date.now()
-const progressBar = new ProgressBar(':bar :current/:total (:percent) - :elapsed - ETA :eta', { total: limit })
+const progressBar = new ProgressBar(':bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta', { total: limit })
 
 function makeRequestPromise () {
   return new Promise((resolve, reject) => {
@@ -48,8 +48,8 @@ async function benchmark () {
 
   console.log('=== Results ===')
   console.log('Date', Date().toLocaleString())
-  console.log(`Duration:\t\t${Date.now() - startDate}ms`)
-  console.log(`Requests:\t\t${results.length}ms`)
+  console.log(`Duration:\t${Date.now() - startDate}ms`)
+  console.log(`Requests:\t${results.length}ms`)
   console.log(`Min:\t\t${min}ms`)
   console.log(`Max:\t\t${max}ms`)
   console.log(`Mean:\t\t${mean}`)
