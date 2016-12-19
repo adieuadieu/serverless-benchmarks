@@ -65,6 +65,8 @@ async function benchmark (url, query, limit) {
   const quant25 = math.quantileSeq(results, 0.25)
   const quant50 = math.quantileSeq(results, 0.5)
   const quant75 = math.quantileSeq(results, 0.75)
+  const quant90 = math.quantileSeq(results, 0.90)
+  const quant99 = math.quantileSeq(results, 0.99)
   const over05 = over(results, 500)
   const over1 = over(results, 1000)
   const over2 = over(results, 2000)
@@ -75,7 +77,7 @@ async function benchmark (url, query, limit) {
   const data = [
     Date(completionDate).toLocaleString(), totalRequests, totalDuration,
     min, max, mean, std,
-    quant25, quant50, quant75,
+    quant25, quant50, quant75, quant90, quant99,
     over05, over1, over2, over3, over4, over5,
   ]
 
@@ -90,6 +92,8 @@ async function benchmark (url, query, limit) {
   console.log(`Duration Quant 25%:\t${quant25} ms`)
   console.log(`Duration Quant 50%:\t${quant50} ms`)
   console.log(`Duration Quant 75%:\t${quant75} ms`)
+  console.log(`Duration Quant 90%:\t${quant90} ms`)
+  console.log(`Duration Quant 99%:\t${quant99} ms`)
   console.log(`Duration Over 0.5s:\t${over05}`)
   console.log(`Duration Over 1s:\t${over1}`)
   console.log(`Duration Over 2s:\t${over2}`)
