@@ -34,6 +34,7 @@ async function makeRequests (url, query, limit, progressBar) {
   for (let i = 0; i < limit; i += 1) {
     try {
       // we're blocking on purpose (so only one request is made/completed at one time)
+      // http://eslint.org/docs/rules/no-await-in-loop#when-not-to-use-it
       // eslint-disable-next-line no-await-in-loop
       results[i] = await makeRequestPromise(url, query)
     } catch (error) {
