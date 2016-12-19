@@ -2,7 +2,7 @@ import request from 'request'
 import math from 'mathjs'
 import ProgressBar from 'progress'
 
-const LIMIT = 10000
+const LIMIT = 100//00
 const URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
 const QUERY = '{ hello(name: "Bob") }'
 
@@ -12,7 +12,7 @@ function makeRequestPromise (url, query) {
     let end
     let delta
 
-    request({ url, qs: { query } }, (error, response, body) => {
+    request({ url, qs: { query } }, (error, response /* , body */) => {
       if (error && response.statusCode !== 200) return reject(error)
 
       return resolve(delta)
@@ -45,7 +45,7 @@ async function makeRequests (url, query, limit, progressBar) {
 }
 
 function over (values, ms) {
-  return values.reduce((count, value) => value > ms ? count + 1 : count, 0)
+  return values.reduce((count, value) => (value > ms ? count + 1 : count), 0)
 }
 
 async function benchmark (url, query, limit) {
