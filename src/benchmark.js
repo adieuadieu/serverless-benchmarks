@@ -103,5 +103,3 @@ async function benchmark (url, query, limit) {
 }
 
 benchmark(URL, QUERY, LIMIT)
-
-//console.log(over([50, 50, 50, 100, 101, 102, 103], 100))
