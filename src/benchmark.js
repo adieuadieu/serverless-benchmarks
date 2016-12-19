@@ -31,8 +31,10 @@ function makeRequestPromise (url, query) {
 async function makeRequests (url, query, limit, progressBar) {
   const results = []
 
-  for (let i = 0; i < limit; i++) {
+  for (let i = 0; i < limit; i += 1) {
     try {
+      // we're blocking on purpose (so only one request is made/completed at one time)
+      // eslint-disable-next-line no-await-in-loop
       results[i] = await makeRequestPromise(url, query)
     } catch (error) {
       console.log('request error', error)
