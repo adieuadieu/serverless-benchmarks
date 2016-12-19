@@ -2,7 +2,7 @@ import request from 'request'
 import math from 'mathjs'
 import ProgressBar from 'progress'
 
-const LIMIT = 100//00
+const LIMIT = 10000
 const URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
 const QUERY = '{ hello(name: "Bob") }'
 
