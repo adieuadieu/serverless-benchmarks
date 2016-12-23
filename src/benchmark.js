@@ -2,10 +2,13 @@ import request from 'request'
 import math from 'mathjs'
 import ProgressBar from 'progress'
 
+const LOGGING = true
 const LIMIT = 10000
 const QUERY = '{ hello(name: "Bob") }'
 const LAMBDA_URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
 const EC2_URL = 'http://54.213.4.217:3000/dev/benchmark/graphql/hello'
+const EC2_ALB_URL = 'http://benchmark-test-333733390.us-west-2.elb.amazonaws.com/dev/benchmark/graphql/hello'
+const EC2_ELB_URL = 'http://benchmark-elb-345285823.us-west-2.elb.amazonaws.com/dev/benchmark/graphql/hello'
 
 function makeRequestPromise (url, query) {
   return new Promise((resolve, reject) => {
@@ -14,7 +17,7 @@ function makeRequestPromise (url, query) {
     let delta
 
     request({ url, qs: { query } }, (error, response /* , body */) => {
-      if (error && response.statusCode !== 200) return reject(error)
+      if (error || response.statusCode !== 200) return reject(error)
 
       return resolve(delta)
     })
@@ -52,8 +55,17 @@ function over (values, ms) {
   return values.reduce((count, value) => (value > ms ? count + 1 : count), 0)
 }
 
-async function benchmark (url, query, limit, logging = false) {
-  const progressBar = new ProgressBar(':bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta', { total: limit })
+function csvLine (data) {
+  if (typeof data[0] !== 'string') {
+    console.log('CSV:')
+    data.forEach(row => console.log(row.join(',')))
+  } else {
+    console.log('CSV:\n', data.join(','))
+  }
+}
+
+async function benchmark (title, url, query, limit, logging = LOGGING) {
+  const progressBar = new ProgressBar(`${title} — :bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta`, { total: limit })
 
   const startDate = Date.now()
   const results = await makeRequests(url, query, limit, progressBar)
@@ -79,6 +91,7 @@ async function benchmark (url, query, limit, logging = false) {
   const over5 = over(results, 5000)
 
   const data = [
+    title,
     Date(completionDate).toLocaleString(), totalRequests, totalDuration,
     min, max, mean, std,
     quant25, quant50, quant75, quant90, quant99,
@@ -86,7 +99,7 @@ async function benchmark (url, query, limit, logging = false) {
   ]
 
   if (logging) {
-    console.log('———— Results ————')
+    console.log(`———— Results: ${title} ————`)
     console.log('Completion Date:\t', Date(completionDate).toLocaleString())
     console.log(`Total Duration:\t\t${totalDuration} ms`)
     console.log(`Requests made:\t\t${totalRequests}`)
@@ -105,8 +118,6 @@ async function benchmark (url, query, limit, logging = false) {
     console.log(`Duration Over 3s:\t${over3}`)
     console.log(`Duration Over 4s:\t${over4}`)
     console.log(`Duration Over 5s:\t${over5}`)
-
-    console.log('CSV:\n', data.join(','))
   }
 
   return data
@@ -114,10 +125,11 @@ async function benchmark (url, query, limit, logging = false) {
 
 (async function main () {
   const runs = [
-    await benchmark(LAMBDA_URL, QUERY, LIMIT),
-    await benchmark(EC2_URL, QUERY, LIMIT),
+    await benchmark('Lambda & API Gateway', LAMBDA_URL, QUERY, LIMIT),
+    await benchmark('Raw EC2', EC2_URL, QUERY, LIMIT),
+    await benchmark('EC2 & ALB', EC2_ALB_URL, QUERY, LIMIT),
+    await benchmark('EC2 & ELB', EC2_ELB_URL, QUERY, LIMIT),
   ]
 
-  const results = Promise.all(runs)
-  results.forEach(console.log)
+  Promise.all(runs).then(csvLine)
 }())
