@@ -6,9 +6,10 @@ import ProgressBar from 'progress'
 // while true; do npm run benchmark; done;
 
 const LOGGING = true
+const REMOVE_OUTLIERS = true
 const RESULT_CSV_FILEPATH = 'results/benchmark.csv' // `results/benchmark-${Date.now()}.csv`
 
-const LIMIT = 10//000
+const LIMIT = 10002
 const QUERY = '{ hello(name: "Bob") }'
 
 const LAMBDA_URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
@@ -66,6 +67,32 @@ function over (values, ms) {
   return values.reduce((count, value) => (value > ms ? count + 1 : count), 0)
 }
 
+function findOutlierIndex (array = []) {
+  const outliers = array.reduce((info, num, index) => {
+    const newInfo = { ...info }
+
+    if (num < info.lowNum || !info.lowNum) {
+      newInfo.lowNum = num
+      newInfo.lowIndex = index
+    }
+    if (num > info.highNum || !info.highNum) {
+      newInfo.highNum = num
+      newInfo.highIndex = index
+    }
+
+    return newInfo
+  }, {})
+
+  return [outliers.lowIndex, outliers.highIndex]
+}
+
+function removeOutliers (array = []) {
+  const newArray = [...array]
+
+  findOutlierIndex(array).forEach(index => newArray.splice(index, 1))
+
+  return newArray
+}
 
 function writeCsv (data) {
   if (typeof data[0] !== 'string') {
@@ -89,8 +116,10 @@ async function benchmark (title, url, query, limit, logging = LOGGING) {
   const progressBar = new ProgressBar(`${title} :bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta`, { total: limit })
 
   const startDate = Date.now()
-  const results = await makeRequests(url, query, limit, progressBar)
+  let results = await makeRequests(url, query, limit, progressBar)
   const completionDate = Date.now()
+
+  if (REMOVE_OUTLIERS) results = removeOutliers(results)
 
   const totalRequests = results.length
   const totalDuration = Date.now() - startDate
