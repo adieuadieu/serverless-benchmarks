@@ -3,8 +3,9 @@ import math from 'mathjs'
 import ProgressBar from 'progress'
 
 const LIMIT = 10000
-const URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
 const QUERY = '{ hello(name: "Bob") }'
+const LAMBDA_URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
+const EC2_URL = 'http://54.213.4.217:3000/dev/benchmark/graphql/hello'
 
 function makeRequestPromise (url, query) {
   return new Promise((resolve, reject) => {
@@ -51,7 +52,7 @@ function over (values, ms) {
   return values.reduce((count, value) => (value > ms ? count + 1 : count), 0)
 }
 
-async function benchmark (url, query, limit) {
+async function benchmark (url, query, limit, logging = false) {
   const progressBar = new ProgressBar(':bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta', { total: limit })
 
   const startDate = Date.now()
@@ -84,29 +85,39 @@ async function benchmark (url, query, limit) {
     over05, over1, over2, over3, over4, over5,
   ]
 
-  console.log('———— Results ————')
-  console.log('Completion Date:\t', Date(completionDate).toLocaleString())
-  console.log(`Total Duration:\t\t${totalDuration} ms`)
-  console.log(`Requests made:\t\t${totalRequests}`)
-  console.log(`Duration Min:\t\t${min} ms`)
-  console.log(`Duration Max:\t\t${max} ms`)
-  console.log(`Duration Mean:\t\t${mean} ms`)
-  console.log(`Duration Std:\t\t${std} ms`)
-  console.log(`Duration Quant 25%:\t${quant25} ms`)
-  console.log(`Duration Quant 50%:\t${quant50} ms`)
-  console.log(`Duration Quant 75%:\t${quant75} ms`)
-  console.log(`Duration Quant 90%:\t${quant90} ms`)
-  console.log(`Duration Quant 99%:\t${quant99} ms`)
-  console.log(`Duration Over 0.5s:\t${over05}`)
-  console.log(`Duration Over 1s:\t${over1}`)
-  console.log(`Duration Over 2s:\t${over2}`)
-  console.log(`Duration Over 3s:\t${over3}`)
-  console.log(`Duration Over 4s:\t${over4}`)
-  console.log(`Duration Over 5s:\t${over5}`)
+  if (logging) {
+    console.log('———— Results ————')
+    console.log('Completion Date:\t', Date(completionDate).toLocaleString())
+    console.log(`Total Duration:\t\t${totalDuration} ms`)
+    console.log(`Requests made:\t\t${totalRequests}`)
+    console.log(`Duration Min:\t\t${min} ms`)
+    console.log(`Duration Max:\t\t${max} ms`)
+    console.log(`Duration Mean:\t\t${mean} ms`)
+    console.log(`Duration Std:\t\t${std} ms`)
+    console.log(`Duration Quant 25%:\t${quant25} ms`)
+    console.log(`Duration Quant 50%:\t${quant50} ms`)
+    console.log(`Duration Quant 75%:\t${quant75} ms`)
+    console.log(`Duration Quant 90%:\t${quant90} ms`)
+    console.log(`Duration Quant 99%:\t${quant99} ms`)
+    console.log(`Duration Over 0.5s:\t${over05}`)
+    console.log(`Duration Over 1s:\t${over1}`)
+    console.log(`Duration Over 2s:\t${over2}`)
+    console.log(`Duration Over 3s:\t${over3}`)
+    console.log(`Duration Over 4s:\t${over4}`)
+    console.log(`Duration Over 5s:\t${over5}`)
 
-  console.log('CSV:\n', data.join(','))
+    console.log('CSV:\n', data.join(','))
+  }
 
   return data
 }
 
-benchmark(URL, QUERY, LIMIT)
+(async function main () {
+  const runs = [
+    await benchmark(LAMBDA_URL, QUERY, LIMIT),
+    await benchmark(EC2_URL, QUERY, LIMIT),
+  ]
+
+  const results = Promise.all(runs)
+  results.forEach(console.log)
+}())

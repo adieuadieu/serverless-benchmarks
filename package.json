@@ -13,7 +13,6 @@
     "lint:eslint": "eslint $npm_package_config_jsSrc",
     "lint:jscs": "jscs $npm_package_config_jsSrc/",
     "deploy": "npm test && serverless deploy -v",
-    "postinstall": "cpy config.sample.json config.json && cpy event.sample.json event.json",
     "benchmark": "babel-node src/benchmark.js",
     "build:koa": "webpack --config webpack-koa.config.js --progress --profile --colors",
     "koa": "babel-node src/koa.js"
