@@ -3,19 +3,21 @@ import request from 'request'
 import math from 'mathjs'
 import ProgressBar from 'progress'
 
-const LOGGING = true
-const RESULT_CSV_FILEPATH = './benchmark-results.csv'
+// while true; do npm run benchmark; done;
 
-const LIMIT = 10//0000
+const LOGGING = true
+const RESULT_CSV_FILEPATH = 'results/benchmark.csv' // `results/benchmark-${Date.now()}.csv`
+
+const LIMIT = 10//000
 const QUERY = '{ hello(name: "Bob") }'
 
 const LAMBDA_URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
 
-const EC2_URL = 'http://54.187.220.213:3000/dev/benchmark/graphql/hello'
+const EC2_URL = 'http://54.202.166.173:3000/dev/benchmark/graphql/hello'
 const EC2_ALB_URL = 'http://benchmark-test-333733390.us-west-2.elb.amazonaws.com/dev/benchmark/graphql/hello'
 const EC2_ELB_URL = 'http://benchmark-elb-345285823.us-west-2.elb.amazonaws.com/dev/benchmark/graphql/hello'
 
-const EC2_EXPRESS_URL = 'http://54.187.220.213:3001/dev/benchmark/graphql/hello'
+const EC2_EXPRESS_URL = 'http://54.202.166.173:3001/dev/benchmark/graphql/hello'
 const EC2_ALB_EXPRESS_URL = 'http://benchmark-test-333733390.us-west-2.elb.amazonaws.com:3001/dev/benchmark/graphql/hello'
 const EC2_ELB_EXPRESS_URL = 'http://benchmark-elb-345285823.us-west-2.elb.amazonaws.com:3001/dev/benchmark/graphql/hello'
 
@@ -65,20 +67,21 @@ function over (values, ms) {
 }
 
 
-function writeCsv (line) {
-  const csv = line.join(',')
-
-  fs.appendFileSync(RESULT_CSV_FILEPATH, `${csv}\n`, 'utf-8')
-  console.log(csv)
+function writeCsv (data) {
+  if (typeof data[0] !== 'string') {
+    data.forEach(line => fs.appendFileSync(RESULT_CSV_FILEPATH, `${line.join(',')}\n`, 'utf-8'))
+  } else {
+    fs.appendFileSync(RESULT_CSV_FILEPATH, `${data.join(',')}\n`, 'utf-8')
+  }
 }
 
-function csvLine (data) {
+function logCsv (data) {
   console.log('\nCSV:')
 
   if (typeof data[0] !== 'string') {
-    data.forEach(writeCsv)
+    data.forEach(line => console.log(line.join(',')))
   } else {
-    writeCsv(data)
+    console.log(data.join(','))
   }
 }
 
@@ -138,6 +141,8 @@ async function benchmark (title, url, query, limit, logging = LOGGING) {
     console.log(`Duration Over 5s:\t${over5}`)
   }
 
+  writeCsv(data)
+
   return data
 }
 
@@ -152,5 +157,5 @@ async function benchmark (title, url, query, limit, logging = LOGGING) {
     await benchmark('EC2 & ELB (express@4.14)', EC2_ELB_EXPRESS_URL, QUERY, LIMIT),
   ]
 console.log('next: wait 1.5 seconds or 2 seconds or something in between each request, see what diff it makes to lambda')
-  Promise.all(runs).then(csvLine)
+  Promise.all(runs).then(logCsv).catch(console.error)
 }())
