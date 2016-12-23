@@ -1,9 +1,12 @@
+import fs from 'fs'
 import request from 'request'
 import math from 'mathjs'
 import ProgressBar from 'progress'
 
 const LOGGING = true
-const LIMIT = 10000
+const RESULT_CSV_FILEPATH = './benchmark-results.csv'
+
+const LIMIT = 10//0000
 const QUERY = '{ hello(name: "Bob") }'
 
 const LAMBDA_URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
@@ -61,12 +64,21 @@ function over (values, ms) {
   return values.reduce((count, value) => (value > ms ? count + 1 : count), 0)
 }
 
+
+function writeCsv (line) {
+  const csv = line.join(',')
+
+  fs.appendFileSync(RESULT_CSV_FILEPATH, `${csv}\n`, 'utf-8')
+  console.log(csv)
+}
+
 function csvLine (data) {
+  console.log('\nCSV:')
+
   if (typeof data[0] !== 'string') {
-    console.log('CSV:')
-    data.forEach(row => console.log(row.join(',')))
+    data.forEach(writeCsv)
   } else {
-    console.log('CSV:\n', data.join(','))
+    writeCsv(data)
   }
 }
 
