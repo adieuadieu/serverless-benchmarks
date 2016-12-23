@@ -8,11 +8,11 @@ const QUERY = '{ hello(name: "Bob") }'
 
 const LAMBDA_URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
 
-const EC2_URL = 'http://54.213.4.217:3000/dev/benchmark/graphql/hello'
+const EC2_URL = 'http://54.187.220.213:3000/dev/benchmark/graphql/hello'
 const EC2_ALB_URL = 'http://benchmark-test-333733390.us-west-2.elb.amazonaws.com/dev/benchmark/graphql/hello'
 const EC2_ELB_URL = 'http://benchmark-elb-345285823.us-west-2.elb.amazonaws.com/dev/benchmark/graphql/hello'
 
-const EC2_EXPRESS_URL = 'http://54.213.4.217:3001/dev/benchmark/graphql/hello'
+const EC2_EXPRESS_URL = 'http://54.187.220.213:3001/dev/benchmark/graphql/hello'
 const EC2_ALB_EXPRESS_URL = 'http://benchmark-test-333733390.us-west-2.elb.amazonaws.com:3001/dev/benchmark/graphql/hello'
 const EC2_ELB_EXPRESS_URL = 'http://benchmark-elb-345285823.us-west-2.elb.amazonaws.com:3001/dev/benchmark/graphql/hello'
 
@@ -23,7 +23,7 @@ function makeRequestPromise (url, query) {
     let delta
 
     request({ url, qs: { query } }, (error, response /* , body */) => {
-      if (error || response.statusCode !== 200) return reject(error)
+      if (error || response.statusCode !== 200) return reject({ status: response.statusCode, error })
 
       return resolve(delta)
     })
@@ -48,7 +48,7 @@ async function makeRequests (url, query, limit, progressBar) {
       // eslint-disable-next-line no-await-in-loop
       results[i] = await makeRequestPromise(url, query)
     } catch (error) {
-      console.log('request error', error)
+      console.log('\nrequest error:', error)
     }
 
     progressBar.tick()
@@ -136,9 +136,9 @@ async function benchmark (title, url, query, limit, logging = LOGGING) {
     await benchmark('EC2 & ALB (koa@2)', EC2_ALB_URL, QUERY, LIMIT),
     await benchmark('EC2 & ELB (koa@2)', EC2_ELB_URL, QUERY, LIMIT),
     await benchmark('Direct EC2 (express@4.14)', EC2_EXPRESS_URL, QUERY, LIMIT),
-    await benchmark('EC2 & ALB (koa@4.14)', EC2_ALB_EXPRESS_URL, QUERY, LIMIT),
-    await benchmark('EC2 & ELB (koa@4.14)', EC2_ELB_EXPRESS_URL, QUERY, LIMIT),
+    await benchmark('EC2 & ALB (express@4.14)', EC2_ALB_EXPRESS_URL, QUERY, LIMIT),
+    await benchmark('EC2 & ELB (express@4.14)', EC2_ELB_EXPRESS_URL, QUERY, LIMIT),
   ]
-
+console.log('next: wait 1.5 seconds or 2 seconds or something in between each request, see what diff it makes to lambda')
   Promise.all(runs).then(csvLine)
 }())
