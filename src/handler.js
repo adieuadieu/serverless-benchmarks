@@ -41,6 +41,7 @@ export const gqlHello = (event, context, callback) => {
     }))
 }
 
+
 export const hello = (event, context, callback) => {
   const response = {
     statusCode: 200,
@@ -48,8 +49,8 @@ export const hello = (event, context, callback) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      message: 'Go Serverless v1.0! Your function executed successfully!',
-      input: event,
+      message: event.queryStringParameters.query,
+      // input: event,
     }),
   }
 

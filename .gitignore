@@ -17,3 +17,4 @@ dump/
 config.yml
 config.json
 event.json
+build/
