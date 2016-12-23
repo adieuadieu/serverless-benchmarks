@@ -13,7 +13,7 @@ const app = new Koa()
 
 app.use(async (context) => {
   context.status = 200
-  context.body = { message: context.request.query }
+  context.body = { message: context.request.query.query }
 })
 
 app.listen(3000)
