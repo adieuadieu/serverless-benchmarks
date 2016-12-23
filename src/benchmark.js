@@ -5,10 +5,16 @@ import ProgressBar from 'progress'
 const LOGGING = true
 const LIMIT = 10000
 const QUERY = '{ hello(name: "Bob") }'
+
 const LAMBDA_URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
+
 const EC2_URL = 'http://54.213.4.217:3000/dev/benchmark/graphql/hello'
 const EC2_ALB_URL = 'http://benchmark-test-333733390.us-west-2.elb.amazonaws.com/dev/benchmark/graphql/hello'
 const EC2_ELB_URL = 'http://benchmark-elb-345285823.us-west-2.elb.amazonaws.com/dev/benchmark/graphql/hello'
+
+const EC2_EXPRESS_URL = 'http://54.213.4.217:3001/dev/benchmark/graphql/hello'
+const EC2_ALB_EXPRESS_URL = 'http://benchmark-test-333733390.us-west-2.elb.amazonaws.com:3001/dev/benchmark/graphql/hello'
+const EC2_ELB_EXPRESS_URL = 'http://benchmark-elb-345285823.us-west-2.elb.amazonaws.com:3001/dev/benchmark/graphql/hello'
 
 function makeRequestPromise (url, query) {
   return new Promise((resolve, reject) => {
@@ -65,7 +71,7 @@ function csvLine (data) {
 }
 
 async function benchmark (title, url, query, limit, logging = LOGGING) {
-  const progressBar = new ProgressBar(`${title} — :bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta`, { total: limit })
+  const progressBar = new ProgressBar(`${title} :bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta`, { total: limit })
 
   const startDate = Date.now()
   const results = await makeRequests(url, query, limit, progressBar)
@@ -126,9 +132,12 @@ async function benchmark (title, url, query, limit, logging = LOGGING) {
 (async function main () {
   const runs = [
     await benchmark('Lambda & API Gateway', LAMBDA_URL, QUERY, LIMIT),
-    await benchmark('Raw EC2', EC2_URL, QUERY, LIMIT),
-    await benchmark('EC2 & ALB', EC2_ALB_URL, QUERY, LIMIT),
-    await benchmark('EC2 & ELB', EC2_ELB_URL, QUERY, LIMIT),
+    await benchmark('Direct EC2 (koa@2)', EC2_URL, QUERY, LIMIT),
+    await benchmark('EC2 & ALB (koa@2)', EC2_ALB_URL, QUERY, LIMIT),
+    await benchmark('EC2 & ELB (koa@2)', EC2_ELB_URL, QUERY, LIMIT),
+    await benchmark('Direct EC2 (express@4.14)', EC2_EXPRESS_URL, QUERY, LIMIT),
+    await benchmark('EC2 & ALB (koa@4.14)', EC2_ALB_EXPRESS_URL, QUERY, LIMIT),
+    await benchmark('EC2 & ELB (koa@4.14)', EC2_ELB_EXPRESS_URL, QUERY, LIMIT),
   ]
 
   Promise.all(runs).then(csvLine)

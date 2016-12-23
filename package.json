@@ -15,7 +15,8 @@
     "deploy": "npm test && serverless deploy -v",
     "benchmark": "babel-node src/benchmark.js",
     "build:koa": "webpack --config webpack-koa.config.js --progress --profile --colors",
-    "koa": "babel-node src/koa.js"
+    "koa": "babel-node src/koa.js",
+    "express": "babel-node src/express.js"
   },
   "repository": {
     "type": "git",
@@ -34,6 +35,7 @@
   },
   "homepage": "https://github.com/adieuadieu/serverless-graphql-benchmarks",
   "dependencies": {
+    "express": "4.14.0",
     "graphql": "0.8.2",
     "koa": "2.0.0-alpha.7",
     "mathjs": "3.8.1",
