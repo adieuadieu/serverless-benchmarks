@@ -9,7 +9,7 @@ const LOGGING = true
 const REMOVE_OUTLIERS = true // remove lowest (one) and highest (one) response times from results?
 const RESULT_CSV_FILEPATH = 'results/measurements.csv' // `results/measurements-${Date.now()}.csv`
 
-const SAMPLE_COUNT = 1002//02
+const SAMPLE_COUNT = 10002
 const QUERY = '{ hello(name: "Bob") }'
 
 const LAMBDA_URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
@@ -141,6 +141,9 @@ async function benchmark (title, url, query, limit, logging = LOGGING, wait = 0)
   const quant75 = math.quantileSeq(results, 0.75)
   const quant90 = math.quantileSeq(results, 0.90)
   const quant99 = math.quantileSeq(results, 0.99)
+  const quant995 = math.quantileSeq(results, 0.995)
+  const quant998 = math.quantileSeq(results, 0.998)
+  const quant999 = math.quantileSeq(results, 0.999)
   const over05 = over(results, 500)
   const over1 = over(results, 1000)
   const over2 = over(results, 2000)
@@ -152,7 +155,7 @@ async function benchmark (title, url, query, limit, logging = LOGGING, wait = 0)
     title,
     Date(completionDate).toLocaleString(), totalRequests, totalDuration,
     min, max, mean, std,
-    quant25, quant50, quant75, quant90, quant99,
+    quant25, quant50, quant75, quant90, quant99, quant995, quant998, quant999,
     over05, over1, over2, over3, over4, over5,
   ]
 
@@ -170,6 +173,9 @@ async function benchmark (title, url, query, limit, logging = LOGGING, wait = 0)
     console.log(`Duration Quant 75%:\t${quant75} ms`)
     console.log(`Duration Quant 90%:\t${quant90} ms`)
     console.log(`Duration Quant 99%:\t${quant99} ms`)
+    console.log(`Duration Quant 99.5%:\t${quant995} ms`)
+    console.log(`Duration Quant 99.8%:\t${quant998} ms`)
+    console.log(`Duration Quant 99.9%:\t${quant999} ms`)
     console.log(`Duration Over 0.5s:\t${over05}`)
     console.log(`Duration Over 1s:\t${over1}`)
     console.log(`Duration Over 2s:\t${over2}`)
@@ -183,7 +189,7 @@ async function benchmark (title, url, query, limit, logging = LOGGING, wait = 0)
   return data
 }
 
-/*
+
 (async function main () {
   const runs = [
     await benchmark('Lambda & API Gateway', LAMBDA_URL, QUERY, SAMPLE_COUNT),
@@ -197,8 +203,9 @@ async function benchmark (title, url, query, limit, logging = LOGGING, wait = 0)
 
   Promise.all(runs).then(logCsv).catch(console.error)
 }())
-*/
 
+
+/*
 (async function lambdaOnlyWithWait () {
   const runs = [
     await benchmark('Lambda & API Gateway (30s wait)', LAMBDA_URL, QUERY, SAMPLE_COUNT, LOGGING, 30000),
@@ -210,3 +217,4 @@ async function benchmark (title, url, query, limit, logging = LOGGING, wait = 0)
 
   Promise.all(runs).then(logCsv).catch(console.error)
 }())
+*/
