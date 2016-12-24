@@ -6,10 +6,10 @@ import ProgressBar from 'progress'
 // while true; do npm run benchmark; done;
 
 const LOGGING = true
-const REMOVE_OUTLIERS = true
-const RESULT_CSV_FILEPATH = 'results/benchmark.csv' // `results/benchmark-${Date.now()}.csv`
+const REMOVE_OUTLIERS = true // remove lowest (one) and highest (one) response times from results?
+const RESULT_CSV_FILEPATH = 'results/measurements.csv' // `results/measurements-${Date.now()}.csv`
 
-const LIMIT = 10002
+const SAMPLE_COUNT = 1002//02
 const QUERY = '{ hello(name: "Bob") }'
 
 const LAMBDA_URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
@@ -22,45 +22,8 @@ const EC2_EXPRESS_URL = 'http://54.202.166.173:3001/dev/benchmark/graphql/hello'
 const EC2_ALB_EXPRESS_URL = 'http://benchmark-test-333733390.us-west-2.elb.amazonaws.com:3001/dev/benchmark/graphql/hello'
 const EC2_ELB_EXPRESS_URL = 'http://benchmark-elb-345285823.us-west-2.elb.amazonaws.com:3001/dev/benchmark/graphql/hello'
 
-function makeRequestPromise (url, query) {
-  return new Promise((resolve, reject) => {
-    let begin = Date.now()
-    let end
-    let delta
-
-    request({ url, qs: { query } }, (error, response /* , body */) => {
-      if (error || response.statusCode !== 200) return reject({ status: response.statusCode, error })
-
-      return resolve(delta)
-    })
-    .on('socket', () => {
-      begin = Date.now()
-    })
-    .on('response', () => {
-      end = Date.now()
-      delta = end - begin
-    })
-    .on('error', reject)
-  })
-}
-
-async function makeRequests (url, query, limit, progressBar) {
-  const results = []
-
-  for (let i = 0; i < limit; i += 1) {
-    try {
-      // we're blocking on purpose (so only one request is made/completed at one time)
-      // http://eslint.org/docs/rules/no-await-in-loop#when-not-to-use-it
-      // eslint-disable-next-line no-await-in-loop
-      results[i] = await makeRequestPromise(url, query)
-    } catch (error) {
-      console.log('\nrequest error:', error)
-    }
-
-    progressBar.tick()
-  }
-
-  return results
+async function sleep (time) {
+  return new Promise(resolve => setTimeout(resolve, time))
 }
 
 function over (values, ms) {
@@ -112,11 +75,56 @@ function logCsv (data) {
   }
 }
 
-async function benchmark (title, url, query, limit, logging = LOGGING) {
+function makeRequestPromise (url, query) {
+  return new Promise((resolve, reject) => {
+    let begin = Date.now()
+    let end
+    let delta
+
+    request({ url, qs: { query } }, (error, response /* , body */) => {
+      if (error || response.statusCode !== 200) return reject({ status: response.statusCode, error })
+
+      return resolve(delta)
+    })
+    .on('socket', () => {
+      begin = Date.now()
+    })
+    .on('response', () => {
+      end = Date.now()
+      delta = end - begin
+    })
+    .on('error', reject)
+  })
+}
+
+async function makeRequests (url, query, limit, progressBar, wait = 0) {
+  const results = []
+
+  for (let i = 0; i < limit; i += 1) {
+    try {
+      // we're blocking on purpose (so only one request is made/completed at one time)
+      // http://eslint.org/docs/rules/no-await-in-loop#when-not-to-use-it
+
+      // eslint-disable-next-line no-await-in-loop
+      if (wait) await sleep(wait)
+
+      // eslint-disable-next-line no-await-in-loop
+      results[i] = await makeRequestPromise(url, query)
+    } catch (error) {
+      console.log('\nrequest error:', error)
+    }
+
+    progressBar.tick()
+  }
+
+  return results
+}
+
+async function benchmark (title, url, query, limit, logging = LOGGING, wait = 0) {
   const progressBar = new ProgressBar(`${title} :bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta`, { total: limit })
 
   const startDate = Date.now()
-  let results = await makeRequests(url, query, limit, progressBar)
+  let results = await makeRequests(url, query, limit, progressBar, wait)
   const completionDate = Date.now()
 
   if (REMOVE_OUTLIERS) results = removeOutliers(results)
@@ -175,16 +183,30 @@ async function benchmark (title, url, query, limit, logging = LOGGING) {
   return data
 }
 
+/*
 (async function main () {
   const runs = [
-    await benchmark('Lambda & API Gateway', LAMBDA_URL, QUERY, LIMIT),
-    await benchmark('Direct EC2 (koa@2)', EC2_URL, QUERY, LIMIT),
-    await benchmark('EC2 & ALB (koa@2)', EC2_ALB_URL, QUERY, LIMIT),
-    await benchmark('EC2 & ELB (koa@2)', EC2_ELB_URL, QUERY, LIMIT),
-    await benchmark('Direct EC2 (express@4.14)', EC2_EXPRESS_URL, QUERY, LIMIT),
-    await benchmark('EC2 & ALB (express@4.14)', EC2_ALB_EXPRESS_URL, QUERY, LIMIT),
-    await benchmark('EC2 & ELB (express@4.14)', EC2_ELB_EXPRESS_URL, QUERY, LIMIT),
+    await benchmark('Lambda & API Gateway', LAMBDA_URL, QUERY, SAMPLE_COUNT),
+    await benchmark('Direct EC2 (koa@2)', EC2_URL, QUERY, SAMPLE_COUNT),
+    await benchmark('EC2 & ALB (koa@2)', EC2_ALB_URL, QUERY, SAMPLE_COUNT),
+    await benchmark('EC2 & ELB (koa@2)', EC2_ELB_URL, QUERY, SAMPLE_COUNT),
+    await benchmark('Direct EC2 (express@4.14)', EC2_EXPRESS_URL, QUERY, SAMPLE_COUNT),
+    await benchmark('EC2 & ALB (express@4.14)', EC2_ALB_EXPRESS_URL, QUERY, SAMPLE_COUNT),
+    await benchmark('EC2 & ELB (express@4.14)', EC2_ELB_EXPRESS_URL, QUERY, SAMPLE_COUNT),
   ]
-console.log('next: wait 1.5 seconds or 2 seconds or something in between each request, see what diff it makes to lambda')
+
+  Promise.all(runs).then(logCsv).catch(console.error)
+}())
+*/
+
+(async function lambdaOnlyWithWait () {
+  const runs = [
+    await benchmark('Lambda & API Gateway (30s wait)', LAMBDA_URL, QUERY, SAMPLE_COUNT, LOGGING, 30000),
+    await benchmark('Lambda & API Gateway (10s wait)', LAMBDA_URL, QUERY, SAMPLE_COUNT, LOGGING, 10000),
+    await benchmark('Lambda & API Gateway (5s wait)', LAMBDA_URL, QUERY, SAMPLE_COUNT, LOGGING, 5000),
+    await benchmark('Lambda & API Gateway (2s wait)', LAMBDA_URL, QUERY, SAMPLE_COUNT, LOGGING, 2000),
+    await benchmark('Lambda & API Gateway (0s wait)', LAMBDA_URL, QUERY, SAMPLE_COUNT, LOGGING, 0),
+  ]
+
   Promise.all(runs).then(logCsv).catch(console.error)
 }())
