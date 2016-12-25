@@ -62,7 +62,7 @@
     "eslint-plugin-import": "2.2.0",
     "eslint-plugin-promise": "3.4.0",
     "json-loader": "0.5.4",
-    "serverless-webpack": "1.0.0-rc.2",
+    "serverless-webpack": "latest",
     "webpack": "1.14.0"
   },
   "ava": {
