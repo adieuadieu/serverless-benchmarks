@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/adieuadieu/serverless-graphql-benchmarks.git"
+    "url": "https://github.com/adieuadieu/serverless-benchmarks.git"
   },
   "keywords": [
     "graphql",
@@ -31,9 +31,9 @@
   "author": "Marco Lüthy",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/adieuadieu/serverless-graphql-benchmarks/issues"
+    "url": "https://github.com/adieuadieu/serverless-benchmarks/issues"
   },
-  "homepage": "https://github.com/adieuadieu/serverless-graphql-benchmarks",
+  "homepage": "https://github.com/adieuadieu/serverless-benchmarks",
   "dependencies": {
     "express": "4.14.0",
     "graphql": "0.8.2",
