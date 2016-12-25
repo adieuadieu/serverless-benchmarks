@@ -15,7 +15,7 @@ const RESULT_CSV_FILEPATH = 'results/test.csv' // `results/measurements-${Date.n
 const PROGRESS_INTERVAL = 500
 
 const CONCURRENCY = 30
-const SAMPLE_COUNT = 10002
+const SAMPLE_COUNT = 100002
 const QUERY = '{ hello(name: "Bob") }'
 
 const LAMBDA_URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
@@ -142,17 +142,15 @@ async function makeMeasurements (url, query, limit, progressBar, wait = 0, concu
       const data = []
 
       while (count < limit) {
-        let result
-
         count += 1
 
         try {
-          result = await makeRequestPromise(url, query)
+          const result = await makeRequestPromise(url, query)
+          data.push(result)
         } catch (error) {
           count -= 1
+          console.error('\nRequest failure:', error)
         }
-
-        data.push(result)
       }
 
       resolve(data)
@@ -220,7 +218,7 @@ async function benchmark (title, url, query, limit, logging = LOGGING, wait = 0,
 
   const data = [
     title,
-    Date(completionDate).toLocaleString(), totalRequests, totalDuration, rps,
+    Date(completionDate).toLocaleString(), concurrency, totalRequests, totalDuration, rps,
     min, max, mean, std,
     quant25, quant50, quant75, quant90, quant99, quant995, quant998, quant999,
     over05, over1, over2, over3, over4, over5,
