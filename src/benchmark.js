@@ -12,9 +12,10 @@ import ProgressBar from 'progress'
 const LOGGING = true
 const REMOVE_OUTLIERS = true // remove lowest (one) and highest (one) response times from results?
 const RESULT_CSV_FILEPATH = 'results/test.csv' // `results/measurements-${Date.now()}.csv`
+const PROGRESS_INTERVAL = 500
 
-const CONCURRENCY = 1
-const SAMPLE_COUNT = 12
+const CONCURRENCY = 30
+const SAMPLE_COUNT = 10002
 const QUERY = '{ hello(name: "Bob") }'
 
 const LAMBDA_URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
@@ -134,6 +135,8 @@ async function makeMeasurements (url, query, limit, progressBar, wait = 0, concu
   let count = 0
   const promises = []
 
+  progressBar.tick()
+
   function startExecution () {
     return new Promise(async (resolve) => {
       const data = []
@@ -150,7 +153,6 @@ async function makeMeasurements (url, query, limit, progressBar, wait = 0, concu
         }
 
         data.push(result)
-        progressBar.tick()
       }
 
       resolve(data)
@@ -158,25 +160,35 @@ async function makeMeasurements (url, query, limit, progressBar, wait = 0, concu
   }
 
   for (let i = 0; i < concurrency; i += 1) {
-    console.log('conc', i)
     promises.push(startExecution())
   }
 
+  const barInterval = setInterval(() => {
+    progressBar.update(count / limit)
+  }, PROGRESS_INTERVAL)
 
-  return Promise.all(promises).then(results => [].concat(...results)).catch(console.log)
+  const data = await Promise.all(promises).then(results => [].concat(...results)).catch(console.log)
+
+  clearInterval(barInterval)
+
+  progressBar.terminate()
+
+  return data
 }
 
 async function benchmark (title, url, query, limit, logging = LOGGING, wait = 0, concurrency = 1) {
-  const progressBar = new ProgressBar(`${title} :bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta`, { total: limit })
+  const progressBar = new ProgressBar(
+    `${title} :bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta`,
+    { total: limit, clear: true, width: 100 },
+  )
 
   const startDate = Date.now()
   let results
 
   try {
     results = await makeMeasurements(url, query, limit, progressBar, wait, concurrency)
-    console.log('lol', results)
   } catch (error) {
-    console.log('benchmark error:', error)
+    console.log('benchmark measurement error:', error)
   }
 
   const completionDate = Date.now()
@@ -264,13 +276,13 @@ async function benchmark (title, url, query, limit, logging = LOGGING, wait = 0,
 (async function concurrency () {
   const runs = [
     await benchmark('Lambda & API Gateway', LAMBDA_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
-/*    await benchmark('Direct EC2 (koa@2)', EC2_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
+    await benchmark('Direct EC2 (koa@2)', EC2_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
     await benchmark('EC2 & ALB (koa@2)', EC2_ALB_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
     await benchmark('EC2 & ELB (koa@2)', EC2_ELB_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
     await benchmark('Direct EC2 (express@4.14)', EC2_EXPRESS_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
     await benchmark('EC2 & ALB (express@4.14)', EC2_ALB_EXPRESS_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
     await benchmark('EC2 & ELB (express@4.14)', EC2_ELB_EXPRESS_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
-*/  ]
+  ]
 
   Promise.all(runs).then(logCsv).catch(console.error)
 }())
