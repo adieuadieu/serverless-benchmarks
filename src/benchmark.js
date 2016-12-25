@@ -13,8 +13,8 @@ const LOGGING = true
 const REMOVE_OUTLIERS = true // remove lowest (one) and highest (one) response times from results?
 const RESULT_CSV_FILEPATH = 'results/test.csv' // `results/measurements-${Date.now()}.csv`
 
-const CONCURRENCY = 1000
-const SAMPLE_COUNT = 100002
+const CONCURRENCY = 1
+const SAMPLE_COUNT = 12
 const QUERY = '{ hello(name: "Bob") }'
 
 const LAMBDA_URL = 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello'
@@ -130,11 +130,55 @@ async function makeRequests (url, query, limit, progressBar, wait = 0, concurren
   return results
 }
 
+async function makeMeasurements (url, query, limit, progressBar, wait = 0, concurrency = 1) {
+  let count = 0
+  const promises = []
+
+  function startExecution () {
+    return new Promise(async (resolve) => {
+      const data = []
+
+      while (count < limit) {
+        let result
+
+        count += 1
+
+        try {
+          result = await makeRequestPromise(url, query)
+        } catch (error) {
+          count -= 1
+        }
+
+        data.push(result)
+        progressBar.tick()
+      }
+
+      resolve(data)
+    })
+  }
+
+  for (let i = 0; i < concurrency; i += 1) {
+    console.log('conc', i)
+    promises.push(startExecution())
+  }
+
+
+  return Promise.all(promises).then(results => [].concat(...results)).catch(console.log)
+}
+
 async function benchmark (title, url, query, limit, logging = LOGGING, wait = 0, concurrency = 1) {
   const progressBar = new ProgressBar(`${title} :bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta`, { total: limit })
 
   const startDate = Date.now()
-  let results = await makeRequests(url, query, limit, progressBar, wait, concurrency)
+  let results
+
+  try {
+    results = await makeMeasurements(url, query, limit, progressBar, wait, concurrency)
+    console.log('lol', results)
+  } catch (error) {
+    console.log('benchmark error:', error)
+  }
+
   const completionDate = Date.now()
 
   if (REMOVE_OUTLIERS) results = removeOutliers(results)
@@ -220,13 +264,13 @@ async function benchmark (title, url, query, limit, logging = LOGGING, wait = 0,
 (async function concurrency () {
   const runs = [
     await benchmark('Lambda & API Gateway', LAMBDA_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
-    await benchmark('Direct EC2 (koa@2)', EC2_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
+/*    await benchmark('Direct EC2 (koa@2)', EC2_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
     await benchmark('EC2 & ALB (koa@2)', EC2_ALB_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
     await benchmark('EC2 & ELB (koa@2)', EC2_ELB_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
     await benchmark('Direct EC2 (express@4.14)', EC2_EXPRESS_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
     await benchmark('EC2 & ALB (express@4.14)', EC2_ALB_EXPRESS_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
     await benchmark('EC2 & ELB (express@4.14)', EC2_ELB_EXPRESS_URL, QUERY, SAMPLE_COUNT, LOGGING, 0, CONCURRENCY),
-  ]
+*/  ]
 
   Promise.all(runs).then(logCsv).catch(console.error)
 }())
