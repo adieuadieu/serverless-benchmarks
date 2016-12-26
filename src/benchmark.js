@@ -9,7 +9,7 @@ const options = {
   progressInterval: 750,
   concurrency: 200,
   sampleCount: 10002,
-  duration: 1000 * 60,
+  duration: 1000 * 60 * 60,
   query: '{ hello(name: "Bob") }',
 }
 
