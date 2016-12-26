@@ -45,6 +45,7 @@ const urls = {
 
   try {
     await limited.withConcurrency({ urls, ...limitedOptions })
+    await limited.lambdaOnlyWithWait({ urls, ...limitedOptions, limit: 1000 })
     // await timed.withPreWarm({ urls, ...timedOptions })
   } catch (error) {
     console.error('Run error:', error, error.stack)
