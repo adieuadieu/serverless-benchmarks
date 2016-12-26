@@ -1,3 +1,4 @@
+import fs from 'fs'
 import * as limited from './measurements/limited'
 import * as timed from './measurements/timed'
 
@@ -6,27 +7,45 @@ const options = {
   removeOutliers: true, // remove lowest (one) and highest (one) response times from results?
   csvPath: 'results/test.csv', // `results/measurements-${Date.now()}.csv`
   progressInterval: 750,
-  concurrency: 1,
+  concurrency: 200,
   sampleCount: 10002,
+  duration: 1000 * 60,
   query: '{ hello(name: "Bob") }',
 }
 
+const limitedOptions = {
+  ...options,
+  limit: options.sampleCount,
+}
+
+const timedOptions = {
+  ...options,
+  concurrency: 1,
+  limit: options.duration,
+  progressInterval: 1000,
+}
+
 const urls = {
-  lambda: 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/measure/graphql/hello',
+  lambda: 'https://q6fn31rhzk.execute-api.us-west-2.amazonaws.com/dev/benchmark/graphql/hello',
   koa: {
-    ec2: 'http://54.202.166.173:3000/dev/measure/graphql/hello',
-    alb: 'http://measure-test-333733390.us-west-2.elb.amazonaws.com/dev/measure/graphql/hello',
-    elb: 'http://measure-elb-345285823.us-west-2.elb.amazonaws.com/dev/measure/graphql/hello',
+    ec2: 'http://54.202.166.173:3000/dev/benchmark/graphql/hello',
+    alb: 'http://benchmark-test-333733390.us-west-2.elb.amazonaws.com/dev/benchmark/graphql/hello',
+    elb: 'http://benchmark-elb-345285823.us-west-2.elb.amazonaws.com/dev/benchmark/graphql/hello',
   },
   express: {
-    ec2: 'http://54.202.166.173:3001/dev/measure/graphql/hello',
-    alb: 'http://measure-test-333733390.us-west-2.elb.amazonaws.com:3001/dev/measure/graphql/hello',
-    elb: 'http://measure-elb-345285823.us-west-2.elb.amazonaws.com:3001/dev/measure/graphql/hello',
+    ec2: 'http://54.202.166.173:3001/dev/benchmark/graphql/hello',
+    alb: 'http://benchmark-test-333733390.us-west-2.elb.amazonaws.com:3001/dev/benchmark/graphql/hello',
+    elb: 'http://benchmark-elb-345285823.us-west-2.elb.amazonaws.com:3001/dev/benchmark/graphql/hello',
   },
 }
 
-(async function run () {
-  await limited.withConcurrency({ urls, ...options })
-  await timed.withPreBurst({ urls, ...options })
+;(async function run () {
+  fs.appendFileSync(options.csvPath, ',\n', 'utf-8')
 
+  try {
+    //await limited.withConcurrency({ urls, ...limitedOptions })
+    await timed.withPreWarm({ urls, ...timedOptions })
+  } catch (error) {
+    console.error('Run error:', error, error.stack)
+  }
 }())

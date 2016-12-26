@@ -1,6 +1,7 @@
 import fs from 'fs'
 import request from 'request'
 import math from 'mathjs'
+import ProgressBar from 'progress'
 
 export async function sleep (time) {
   return new Promise(resolve => setTimeout(resolve, time))
@@ -84,9 +85,9 @@ export function processResults ({ title, startDate, completionDate, logging, con
   const totalDuration = Date.now() - startDate
   const rps = totalRequests / (totalDuration / 1000)
 
-  const min = Math.min(...results)
-  const max = Math.max(...results)
-  const mean = math.mean(...results)
+  const min = math.min(results)
+  const max = math.max(results)
+  const mean = math.mean(results)
   const std = math.std(results, 'uncorrected')
   const quant25 = math.quantileSeq(results, 0.25)
   const quant50 = math.quantileSeq(results, 0.5)
@@ -140,4 +141,29 @@ export function processResults ({ title, startDate, completionDate, logging, con
   writeCsv(csvPath, data)
 
   return data
+}
+
+export async function measure (
+  makeMeasurements,
+  { title, url, query, limit, logging = true, wait = 0, concurrency = 1, csvPath, removeOutliers, ...options },
+) {
+  const progressBar = new ProgressBar(
+    `${title} :bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta`,
+    { total: limit, clear: true, width: 100 },
+  )
+
+  const startDate = Date.now()
+  let results
+
+  try {
+    results = await makeMeasurements({ url, query, limit, progressBar, wait, concurrency, ...options })
+  } catch (error) {
+    console.log('measure measurement error:', error)
+  }
+
+  const completionDate = Date.now()
+
+  if (removeOutliers) results = removeArrayOutliers(results)
+
+  return processResults({ title, startDate, completionDate, logging, concurrency, results, csvPath })
 }

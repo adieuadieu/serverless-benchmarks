@@ -2,12 +2,12 @@
 // we're blocking on purpose (so only one request is made/completed at one time)
 // http://eslint.org/docs/rules/no-await-in-loop#when-not-to-use-it
 
-import ProgressBar from 'progress'
-import { sleep, removeArrayOutliers, makeRequestPromise, processResults, logCsv } from './utils'
+import { sleep, measure, makeRequestPromise, logCsv } from './utils'
 
-async function makeMeasurements ({ url, query, limit, progressBar, wait = 0, concurrency = 1, progressInterval = 750 }) {
-  let count = 0
+async function timed ({ url, query, limit, progressBar, wait = 0, concurrency = 1, progressInterval = 750 }) {
   const promises = []
+  const startDate = Date.now()
+  const endDate = startDate + limit
 
   progressBar.tick()
 
@@ -15,16 +15,13 @@ async function makeMeasurements ({ url, query, limit, progressBar, wait = 0, con
     return new Promise(async (resolve) => {
       const data = []
 
-      while (count < limit) {
-        count += 1
-
+      while (Date.now() < endDate) {
         if (wait) await sleep(wait)
 
         try {
           const result = await makeRequestPromise(url, query)
           data.push(result)
         } catch (error) {
-          count -= 1
           console.error('\nRequest failure:', error)
         }
       }
@@ -38,7 +35,10 @@ async function makeMeasurements ({ url, query, limit, progressBar, wait = 0, con
   }
 
   const barInterval = setInterval(() => {
-    progressBar.update(count / limit)
+    const left = endDate - Date.now()
+    const completed = limit - left
+
+    progressBar.update(completed / limit)
   }, progressInterval)
 
   const data = await Promise.all(promises).then(results => [].concat(...results)).catch(console.log)
@@ -50,38 +50,19 @@ async function makeMeasurements ({ url, query, limit, progressBar, wait = 0, con
   return data
 }
 
-async function measure ({ title, url, query, limit, logging = true, wait = 0, concurrency = 1, csvPath, removeOutliers }) {
-  const progressBar = new ProgressBar(
-    `${title} :bar :current/:total (:percent) - Elapsed :elapsed - ETA :eta`,
-    { total: limit, clear: true, width: 100 },
-  )
-
-  const startDate = Date.now()
-  let results
-
-  try {
-    results = await makeMeasurements(url, query, limit, progressBar, wait, concurrency)
-  } catch (error) {
-    console.log('measure measurement error:', error)
-  }
-
-  const completionDate = Date.now()
-
-  if (removeOutliers) results = removeArrayOutliers(results)
-
-  return processResults({ title, startDate, completionDate, logging, concurrency, results, csvPath })
-}
-
-export async function withPreBurst ({ urls, ...options }) {
-  const runs = [
-    await measure({ title: 'Lambda & API Gateway', url: urls.lambda, ...options }),
-    await measure({ title: 'Direct EC2 (koa@2)', url: urls.koa.ec2, ...options }),
-    await measure({ title: 'EC2 & ALB (koa@2)', url: urls.koa.alb, ...options }),
-    await measure({ title: 'EC2 & ELB (koa@2)', url: urls.koa.elb, ...options }),
-    await measure({ title: 'Direct EC2 (express@4.14)', url: urls.express.ec2, ...options }),
-    await measure({ title: 'EC2 & ALB (express@4.14)', url: urls.express.elb, ...options }),
-    await measure({ title: 'EC2 & ELB (express@4.14)', url: urls.express.elb, ...options }),
+export async function withPreWarm ({ urls, ...options }) {
+  const measurements = [
+    measure(timed, { title: 'Lambda & API Gateway', url: urls.lambda, ...options }),
+    // await measure(timed, { title: 'Direct EC2 (koa@2)', url: urls.koa.ec2, ...options }),
+    // await measure(timed, { title: 'EC2 & ALB (koa@2)', url: urls.koa.alb, ...options }),
+    // await measure(timed, { title: 'EC2 & ELB (koa@2)', url: urls.koa.elb, ...options }),
+    measure(timed, { title: 'Direct EC2 (express@4.14)', url: urls.express.ec2, ...options }),
+    measure(timed, { title: 'EC2 & ALB (express@4.14)', url: urls.express.elb, ...options }),
+    // await measure(timed, { title: 'EC2 & ELB (express@4.14)', url: urls.express.elb, ...options }),
   ]
 
-  return Promise.all(runs).then(logCsv).catch(console.error)
+  return Promise.all(measurements).then(logCsv).catch(console.error)
+  // logCsv(measurements)
+
+  return measurements
 }
