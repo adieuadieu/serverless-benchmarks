@@ -7,20 +7,21 @@ const options = {
   removeOutliers: true, // remove lowest (one) and highest (one) response times from results?
   csvPath: 'results/test.csv', // `results/measurements-${Date.now()}.csv`
   progressInterval: 750,
-  concurrency: 200,
-  sampleCount: 10002,
-  duration: 1000 * 60 * 60,
+  concurrency: 1,
+  sampleCount: 1000002,
+  duration: 1000 * 60,// * 60,
   query: '{ hello(name: "Bob") }',
 }
 
 const limitedOptions = {
   ...options,
   limit: options.sampleCount,
+  concurrency: 20,
 }
 
 const timedOptions = {
   ...options,
-  concurrency: 1,
+  concurrency: 100,
   limit: options.duration,
   progressInterval: 1000,
 }
@@ -43,8 +44,8 @@ const urls = {
   fs.appendFileSync(options.csvPath, ',\n', 'utf-8')
 
   try {
-    //await limited.withConcurrency({ urls, ...limitedOptions })
-    await timed.withPreWarm({ urls, ...timedOptions })
+    await limited.withConcurrency({ urls, ...limitedOptions })
+    // await timed.withPreWarm({ urls, ...timedOptions })
   } catch (error) {
     console.error('Run error:', error, error.stack)
   }

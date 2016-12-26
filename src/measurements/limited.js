@@ -52,9 +52,9 @@ async function limited ({ url, query, limit, progressBar, wait = 0, concurrency 
 export async function withConcurrency ({ urls, ...options }) {
   const measurements = [
     await measure(limited, { title: 'Lambda & API Gateway', url: urls.lambda, ...options }),
-    await measure(limited, { title: 'Direct EC2 (koa@2)', url: urls.koa.ec2, ...options }),
-    await measure(limited, { title: 'EC2 & ALB (koa@2)', url: urls.koa.alb, ...options }),
-    await measure(limited, { title: 'EC2 & ELB (koa@2)', url: urls.koa.elb, ...options }),
+    // await measure(limited, { title: 'Direct EC2 (koa@2)', url: urls.koa.ec2, ...options }),
+    // await measure(limited, { title: 'EC2 & ALB (koa@2)', url: urls.koa.alb, ...options }),
+    // await measure(limited, { title: 'EC2 & ELB (koa@2)', url: urls.koa.elb, ...options }),
     await measure(limited, { title: 'Direct EC2 (express@4.14)', url: urls.express.ec2, ...options }),
     await measure(limited, { title: 'EC2 & ALB (express@4.14)', url: urls.express.elb, ...options }),
     await measure(limited, { title: 'EC2 & ELB (express@4.14)', url: urls.express.elb, ...options }),

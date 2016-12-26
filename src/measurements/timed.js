@@ -53,16 +53,16 @@ async function timed ({ url, query, limit, progressBar, wait = 0, concurrency = 
 export async function withPreWarm ({ urls, ...options }) {
   const measurements = [
     measure(timed, { title: 'Lambda & API Gateway', url: urls.lambda, ...options }),
-    // await measure(timed, { title: 'Direct EC2 (koa@2)', url: urls.koa.ec2, ...options }),
-    // await measure(timed, { title: 'EC2 & ALB (koa@2)', url: urls.koa.alb, ...options }),
-    // await measure(timed, { title: 'EC2 & ELB (koa@2)', url: urls.koa.elb, ...options }),
+    // measure(timed, { title: 'Direct EC2 (koa@2)', url: urls.koa.ec2, ...options }),
+    // measure(timed, { title: 'EC2 & ALB (koa@2)', url: urls.koa.alb, ...options }),
+    // measure(timed, { title: 'EC2 & ELB (koa@2)', url: urls.koa.elb, ...options }),
     // measure(timed, { title: 'Direct EC2 (express@4.14)', url: urls.express.ec2, ...options }),
     measure(timed, { title: 'EC2 & ALB (express@4.14)', url: urls.express.elb, ...options }),
-    // await measure(timed, { title: 'EC2 & ELB (express@4.14)', url: urls.express.elb, ...options }),
+    // measure(timed, { title: 'EC2 & ELB (express@4.14)', url: urls.express.elb, ...options }),
   ]
 
   return Promise.all(measurements).then(logCsv).catch(console.error)
   // logCsv(measurements)
 
-  return measurements
+  // return measurements
 }
