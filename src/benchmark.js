@@ -6,7 +6,7 @@ const options = {
   logging: true,
   removeOutliers: true, // remove lowest (one) and highest (one) response times from results?
   csvPath: 'results/test.csv', // `results/measurements-${Date.now()}.csv`
-  progressInterval: 750,
+  progressInterval: 1000,
   concurrency: 1,
   sampleCount: 1000002,
   duration: 1000 * 60,// * 60,
@@ -21,9 +21,8 @@ const limitedOptions = {
 
 const timedOptions = {
   ...options,
-  concurrency: 100,
   limit: options.duration,
-  progressInterval: 1000,
+  concurrency: 100,
 }
 
 const urls = {
@@ -45,7 +44,8 @@ const urls = {
 
   try {
     await limited.withConcurrency({ urls, ...limitedOptions })
-    await limited.lambdaOnlyWithWait({ urls, ...limitedOptions, limit: 1000 })
+    await limited.lambdaOnlyWithWait({ urls, ...limitedOptions, concurrency: 1, limit: 1002 })
+    await limited.lambdaOnlyWithWait({ urls, ...limitedOptions, concurrency: 100, limit: 10002 })
     // await timed.withPreWarm({ urls, ...timedOptions })
   } catch (error) {
     console.error('Run error:', error, error.stack)
