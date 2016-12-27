@@ -43,7 +43,7 @@ const urls = {
   fs.appendFileSync(options.csvPath, ',\n', 'utf-8')
 
   try {
-    await limited.withConcurrency({ urls, ...limitedOptions })
+    // await limited.withConcurrency({ urls, ...limitedOptions })
     await limited.lambdaOnlyWithWait({ urls, ...limitedOptions, concurrency: 1, limit: 1002 })
     await limited.lambdaOnlyWithWait({ urls, ...limitedOptions, concurrency: 100, limit: 10002 })
     // await timed.withPreWarm({ urls, ...timedOptions })
