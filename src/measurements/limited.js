@@ -67,9 +67,9 @@ export async function withConcurrency ({ urls, ...options }) {
 
 export async function lambdaOnlyWithWait ({ urls, ...options }) {
   const measurements = [
-    await measure(limited, { title: 'Lambda & API Gateway (30s wait)', url: urls.lambda, ...options, wait: 30000 }),
-    await measure(limited, { title: 'Lambda & API Gateway (10s wait)', url: urls.lambda, ...options, wait: 10000 }),
-    await measure(limited, { title: 'Lambda & API Gateway (5s wait)', url: urls.lambda, ...options, wait: 5000 }),
+    // await measure(limited, { title: 'Lambda & API Gateway (30s wait)', url: urls.lambda, ...options, wait: 30000 }),
+    // await measure(limited, { title: 'Lambda & API Gateway (10s wait)', url: urls.lambda, ...options, wait: 10000 }),
+    // await measure(limited, { title: 'Lambda & API Gateway (5s wait)', url: urls.lambda, ...options, wait: 5000 }),
     await measure(limited, { title: 'Lambda & API Gateway (2s wait)', url: urls.lambda, ...options, wait: 2000 }),
     await measure(limited, { title: 'Lambda & API Gateway (1s wait)', url: urls.lambda, ...options, wait: 1000 }),
     await measure(limited, { title: 'Lambda & API Gateway (0s wait)', url: urls.lambda, ...options, wait: 0 }),

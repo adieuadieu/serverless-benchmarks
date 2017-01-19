@@ -4074,9 +4074,9 @@ serverless-webpack@^1.0.0-rc.4:
     npm-programmatic "0.0.5"
     webpack "^1.13.1"
 
-serverless@1.5.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/serverless/-/serverless-1.5.0.tgz#d6dd8cbda6895a1417e39fa47e1da63e5c51ddb1"
+serverless@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/serverless/-/serverless-1.5.1.tgz#9823591d0184745f27cb4ffce928c456fa136aab"
   dependencies:
     archiver "^1.1.0"
     async "^1.5.2"
